@@ -59,24 +59,6 @@ feat/* → PR → develop (staging) → PR → master (produção)
 
 ---
 
-## Desenvolvimento local
-
-```bash
-# Instalar dependências
-npm install
-
-# Copiar variáveis de ambiente
-cp .env.example .env.local
-# Preencher NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, ADMIN_PASSWORD
-
-# Rodar em desenvolvimento
-npm run dev
-```
-
-Acesse [http://localhost:3000](http://localhost:3000).
-
----
-
 ## Épico SGMU — Roadmap
 
 | Story | Descrição | Status |
