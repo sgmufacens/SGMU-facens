@@ -1,9 +1,6 @@
-# FleetControl
+# SGMU
 
 Sistema de gestão de frota para controle de retiradas, devoluções e agendamentos de veículos.
-
-- **Produção:** https://fleetapp-xi.vercel.app
-- **Repositório:** https://github.com/JoaoGabriel0320/fleet-app
 
 ---
 
@@ -80,15 +77,15 @@ Acesse [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Épico FLEET — Roadmap
+## Épico SGMU — Roadmap
 
 | Story | Descrição | Status |
 |-------|-----------|--------|
-| FLEET-001 | Retirada e devolução de veículos | ✅ Produção |
-| FLEET-002 | Agendamento por data/hora | ✅ Produção |
-| FLEET-003 | Cadastro de veículos (admin) | 🔜 Próximo |
-| FLEET-004 | Cadastro de colaboradores e filiais | 🔜 Próximo |
-| FLEET-005 | Dashboard em tempo real | ✅ Produção |
-| FLEET-006 | Histórico e relatórios | ✅ Produção |
-| FLEET-007 | Alertas de atraso | 🔜 Próximo |
-| FLEET-008 | Manutenção por KM | 🔜 Próximo |
+| SGMU-001 | Retirada e devolução de veículos | ✅ Produção |
+| SGMU-002 | Agendamento por data/hora | ✅ Produção |
+| SGMU-003 | Cadastro de veículos (admin) | 🔜 Próximo |
+| SGMU-004 | Cadastro de colaboradores e filiais | 🔜 Próximo |
+| SGMU-005 | Dashboard em tempo real | ✅ Produção |
+| SGMU-006 | Histórico e relatórios | ✅ Produção |
+| SGMU-007 | Alertas de atraso | 🔜 Próximo |
+| SGMU-008 | Manutenção por KM | 🔜 Próximo |
