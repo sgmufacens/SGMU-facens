@@ -87,5 +87,4 @@ Acesse [http://localhost:3000](http://localhost:3000).
 | SGMU-004 | Cadastro de colaboradores e filiais | 🔜 Próximo |
 | SGMU-005 | Dashboard em tempo real | ✅ Produção |
 | SGMU-006 | Histórico e relatórios | ✅ Produção |
-| SGMU-007 | Alertas de atraso | 🔜 Próximo |
-| SGMU-008 | Manutenção por KM | 🔜 Próximo |
+
