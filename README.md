@@ -28,24 +28,6 @@ Sistema de gestão de frota para controle de retiradas, devoluções e agendamen
 - **Dark mode** — tema claro/escuro com persistência no localStorage
 - **PWA** — instalável no celular como app nativo
 
----
-
-## Arquitetura
-
-Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalhes completos.
-
-```
-Usuário (browser)
-      ↓
-  Next.js — Vercel
-  ├── Pages (src/app)       → UI em React
-  ├── API Routes (src/app/api) → lógica de admin
-  └── supabase-js            → acesso direto ao banco
-              ↓
-         Supabase (cloud)
-         ├── PostgreSQL       → dados
-         └── Storage          → fotos dos veículos
-```
 
 ---
 
