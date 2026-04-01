@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background -->
+  <rect width="100" height="100" rx="22" fill="#1e40af"/>
+  <!-- Car body (lower half) -->
+  <rect x="14" y="52" width="72" height="22" rx="4" fill="white"/>
+  <!-- Car cabin (trapezoid) -->
+  <polygon points="22,52 28,30 72,30 78,52" fill="white"/>
+  <!-- Left window -->
+  <polygon points="31,50 35,35 50,35 50,50" fill="#1e40af"/>
+  <!-- Right window -->
+  <polygon points="52,50 52,35 67,35 71,50" fill="#1e40af"/>
+  <!-- Left wheel -->
+  <circle cx="29" cy="74" r="11" fill="#1e40af"/>
+  <circle cx="29" cy="74" r="6" fill="white"/>
+  <!-- Right wheel -->
+  <circle cx="71" cy="74" r="11" fill="#1e40af"/>
+  <circle cx="71" cy="74" r="6" fill="white"/>
+  <!-- Headlight -->
+  <rect x="14" y="59" width="4" height="7" rx="2" fill="#93c5fd"/>
+  <!-- Taillight -->
+  <rect x="82" y="59" width="4" height="7" rx="2" fill="#ef4444"/>
+</svg>

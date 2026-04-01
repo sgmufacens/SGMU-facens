@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Background (full bleed, maskable) -->
+  <rect width="100" height="100" fill="#1e40af"/>
+  <!-- Car body (lower half) — scaled down 20% for safe zone -->
+  <rect x="20" y="55" width="60" height="18" rx="3" fill="white"/>
+  <!-- Car cabin -->
+  <polygon points="27,55 32,36 68,36 73,55" fill="white"/>
+  <!-- Left window -->
+  <polygon points="35,53 38,40 52,40 52,53" fill="#1e40af"/>
+  <!-- Right window -->
+  <polygon points="54,53 54,40 64,40 67,53" fill="#1e40af"/>
+  <!-- Left wheel -->
+  <circle cx="33" cy="73" r="9" fill="#1e40af"/>
+  <circle cx="33" cy="73" r="5" fill="white"/>
+  <!-- Right wheel -->
+  <circle cx="67" cy="73" r="9" fill="#1e40af"/>
+  <circle cx="67" cy="73" r="5" fill="white"/>
+  <!-- Headlight -->
+  <rect x="20" y="61" width="3" height="6" rx="1.5" fill="#93c5fd"/>
+  <!-- Taillight -->
+  <rect x="77" y="61" width="3" height="6" rx="1.5" fill="#ef4444"/>
+</svg>
