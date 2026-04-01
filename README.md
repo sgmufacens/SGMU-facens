@@ -31,16 +31,6 @@ Sistema de gestão de frota para controle de retiradas, devoluções e agendamen
 
 ---
 
-## CI/CD
-
-Veja [docs/CICD.md](docs/CICD.md) para o fluxo completo.
-
-```
-feat/* → PR → develop (staging) → PR → master (produção)
-```
-
----
-
 ## Épico SGMU — Roadmap
 
 | Story | Descrição | Status |
