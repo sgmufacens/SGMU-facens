@@ -48,20 +48,25 @@ export default function VehiclesPage() {
   async function save() {
     if (!form.plate || !form.model || !form.brand || !form.year) return
     setSaving(true)
-    const payload = {
-      ...form,
-      year: parseInt(form.year),
-      branch_id: form.branch_id || null,
-      color: form.color || null,
+    try {
+      const payload = {
+        ...form,
+        year: parseInt(form.year),
+        branch_id: form.branch_id || null,
+        color: form.color || null,
+      }
+      if (editing) {
+        const { error } = await supabase.from('vehicles').update(payload).eq('id', editing.id)
+        if (error) { alert(`Erro ao salvar: ${error.message}`); return }
+      } else {
+        const { error } = await supabase.from('vehicles').insert(payload)
+        if (error) { alert(`Erro ao salvar: ${error.message}`); return }
+      }
+      setModal(null)
+      load()
+    } finally {
+      setSaving(false)
     }
-    if (editing) {
-      await supabase.from('vehicles').update(payload).eq('id', editing.id)
-    } else {
-      await supabase.from('vehicles').insert(payload)
-    }
-    setSaving(false)
-    setModal(null)
-    load()
   }
 
   async function toggleStatus(v: Vehicle) {

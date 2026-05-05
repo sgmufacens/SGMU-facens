@@ -38,8 +38,8 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-white dark:bg-slate-800 rounded-2xl flex items-center justify-center mb-4 shadow-xl">
             <Car className="w-8 h-8 text-blue-800 dark:text-blue-400" />
           </div>
-          <h1 className="text-white font-bold text-2xl tracking-tight">FleetControl</h1>
-          <p className="text-blue-300 text-sm mt-1">Controle de frota empresarial</p>
+          <h1 className="text-white font-bold text-2xl tracking-tight">SGMU</h1>
+          <p className="text-blue-300 text-sm mt-1">Sistema de Gestão e Movimentação de Unidades</p>
         </div>
 
         {/* Card */}

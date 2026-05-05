@@ -1,7 +1,7 @@
-// FleetControl Service Worker
+// SGMU Service Worker
 const CACHE_VERSION = 'v1'
-const STATIC_CACHE = `fleetcontrol-static-${CACHE_VERSION}`
-const RUNTIME_CACHE = `fleetcontrol-runtime-${CACHE_VERSION}`
+const STATIC_CACHE = `sgmu-static-${CACHE_VERSION}`
+const RUNTIME_CACHE = `sgmu-runtime-${CACHE_VERSION}`
 
 // Recursos para pré-cachear na instalação
 const PRECACHE_URLS = [

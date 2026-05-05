@@ -67,15 +67,18 @@ export default function CollaboratorsPage() {
     if (!accessTarget || !accessForm.email || !accessForm.password) return
     if (accessForm.password.length < 6) { alert('A senha deve ter pelo menos 6 caracteres.'); return }
     setSaving(true)
-    const res = await fetch('/api/admin/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: accessForm.email, password: accessForm.password, collaboratorId: accessTarget.id }),
-    })
-    const json = await res.json()
-    if (!res.ok) { alert(`Erro: ${json.error}`) }
-    else { setModal(null); load() }
-    setSaving(false)
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: accessForm.email, password: accessForm.password, collaboratorId: accessTarget.id }),
+      })
+      const json = await res.json()
+      if (!res.ok) { alert(`Erro: ${json.error}`) }
+      else { setModal(null); load() }
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function removeAccess(c: Collaborator) {
@@ -185,7 +188,7 @@ export default function CollaboratorsPage() {
         <AdminModal title={`Criar acesso — ${accessTarget.name}`} onClose={() => setModal(null)}>
           <div className="space-y-3">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
-              O colaborador usará este e-mail e senha para entrar no FleetControl.
+              O colaborador usará este e-mail e senha para entrar no SGMU.
             </div>
             <Field label="E-mail *" value={accessForm.email} onChange={v => setAccessForm(f => ({ ...f, email: v }))} placeholder="joao.silva@empresa.com" type="email" />
             <Field label="Senha *" value={accessForm.password} onChange={v => setAccessForm(f => ({ ...f, password: v }))} placeholder="Mínimo 6 caracteres" type="password" />

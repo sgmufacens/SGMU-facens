@@ -1,4 +1,4 @@
--- FleetControl - User Authentication
+﻿-- SGMU - User Authentication
 -- Migration: 004_user_auth
 -- Vincula colaboradores ao Supabase Auth
 --
@@ -10,5 +10,5 @@ ALTER TABLE collaborators
 
 CREATE INDEX IF NOT EXISTS idx_collaborators_user_id ON collaborators(user_id);
 
--- Policy: cada usuário só vê seus próprios dados de auth
--- (as outras policies de SELECT/UPDATE já existem da migration 003)
+-- Policy: cada usuÃ¡rio sÃ³ vÃª seus prÃ³prios dados de auth
+-- (as outras policies de SELECT/UPDATE jÃ¡ existem da migration 003)

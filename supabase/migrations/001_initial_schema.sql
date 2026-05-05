@@ -1,4 +1,4 @@
--- FleetControl - Initial Schema
+﻿-- SGMU - Initial Schema
 -- Migration: 001_initial_schema
 -- Created: 2026-03-01
 
@@ -29,7 +29,7 @@ CREATE TABLE collaborators (
 );
 
 -- ============================================================
--- VEHICLES (Veículos)
+-- VEHICLES (VeÃ­culos)
 -- ============================================================
 CREATE TABLE vehicles (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -53,7 +53,7 @@ CREATE TABLE trips (
   destination_branch_id UUID REFERENCES branches(id),
   destination_description TEXT,
 
-  -- Saída
+  -- SaÃ­da
   km_departure INTEGER NOT NULL,
   departed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   photos_departure TEXT[] DEFAULT '{}',
@@ -75,7 +75,7 @@ CREATE TABLE trips (
 );
 
 -- ============================================================
--- SCHEDULES (Agendamentos) — FLEET-002
+-- SCHEDULES (Agendamentos) â€” FLEET-002
 -- ============================================================
 CREATE TABLE schedules (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -99,10 +99,10 @@ CREATE INDEX idx_vehicles_status ON vehicles(status);
 CREATE INDEX idx_schedules_scheduled_departure ON schedules(scheduled_departure);
 
 -- ============================================================
--- SEED DATA — Exemplo inicial
+-- SEED DATA â€” Exemplo inicial
 -- ============================================================
 INSERT INTO branches (name, city, address) VALUES
-  ('Matriz', 'São Paulo', 'Av. Paulista, 1000'),
+  ('Matriz', 'SÃ£o Paulo', 'Av. Paulista, 1000'),
   ('Filial Sul', 'Curitiba', 'Rua XV de Novembro, 500'),
   ('Filial Norte', 'Manaus', 'Av. Djalma Batista, 200');
 
@@ -116,7 +116,7 @@ INSERT INTO vehicles (plate, model, brand, year, color, status, branch_id)
 SELECT 'GHI-9012', 'Hilux', 'Toyota', 2021, 'Preto', 'available', id FROM branches WHERE name = 'Filial Sul';
 
 INSERT INTO collaborators (name, badge_number, branch_id)
-SELECT 'João Silva', 'COL-001', id FROM branches WHERE name = 'Matriz';
+SELECT 'JoÃ£o Silva', 'COL-001', id FROM branches WHERE name = 'Matriz';
 
 INSERT INTO collaborators (name, badge_number, branch_id)
 SELECT 'Maria Santos', 'COL-002', id FROM branches WHERE name = 'Matriz';

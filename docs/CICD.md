@@ -1,26 +1,26 @@
-# CI/CD — FleetControl
+﻿# CI/CD â€” SGMU
 
 ## Fluxo de branches
 
 ```
 feat/nome-da-feature
-        │
-        │  PR (code review / QA)
-        ▼
-     develop  ──────────────►  Vercel Preview (staging)
-        │
-        │  PR (aprovação para produção)
-        ▼
-      master  ──────────────►  Vercel Production
+        â”‚
+        â”‚  PR (code review / QA)
+        â–¼
+     develop  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º  Vercel Preview (staging)
+        â”‚
+        â”‚  PR (aprovaÃ§Ã£o para produÃ§Ã£o)
+        â–¼
+      master  â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â–º  Vercel Production
 ```
 
 ### Regras
 
-| Branch | Proteção | Deploy Vercel |
+| Branch | ProteÃ§Ã£o | Deploy Vercel |
 |--------|----------|--------------|
-| `master` | Requer PR (merge direto bloqueado) | Produção — https://fleetapp-xi.vercel.app |
-| `develop` | Livre | Preview automático |
-| `feat/*` | Livre | Preview automático (por PR) |
+| `master` | Requer PR (merge direto bloqueado) | ProduÃ§Ã£o â€” https://fleetapp-xi.vercel.app |
+| `develop` | Livre | Preview automÃ¡tico |
+| `feat/*` | Livre | Preview automÃ¡tico (por PR) |
 
 ---
 
@@ -38,14 +38,14 @@ git checkout -b feat/nome-da-feature
 
 ```bash
 git add src/...
-git commit -m "feat: descrição da mudança"
+git commit -m "feat: descriÃ§Ã£o da mudanÃ§a"
 ```
 
 ### 3. Abrir PR para develop (staging)
 
 ```bash
 git push origin feat/nome-da-feature
-gh pr create --base develop --head feat/nome-da-feature --title "feat: descrição"
+gh pr create --base develop --head feat/nome-da-feature --title "feat: descriÃ§Ã£o"
 ```
 
 O Vercel gera automaticamente uma **URL de preview** para testar.
@@ -57,22 +57,22 @@ O Vercel gera automaticamente uma **URL de preview** para testar.
 - Se aprovado, mergear o PR
 
 ```bash
-gh pr merge <número> --squash
+gh pr merge <nÃºmero> --squash
 ```
 
-### 5. Abrir PR de develop → master (produção)
+### 5. Abrir PR de develop â†’ master (produÃ§Ã£o)
 
 ```bash
-gh pr create --base master --head develop --title "release: descrição do release"
+gh pr create --base master --head develop --title "release: descriÃ§Ã£o do release"
 ```
 
-### 6. Merge para produção
+### 6. Merge para produÃ§Ã£o
 
 ```bash
-gh pr merge <número> --squash --admin
+gh pr merge <nÃºmero> --squash --admin
 ```
 
-O Vercel detecta o push no `master` e faz o deploy automático em produção.
+O Vercel detecta o push no `master` e faz o deploy automÃ¡tico em produÃ§Ã£o.
 
 ---
 
@@ -83,10 +83,10 @@ O Vercel detecta o push no `master` e faz o deploy automático em produção.
 | Production | `master` | https://fleetapp-xi.vercel.app |
 | Preview | `develop` / `feat/*` / PRs | URL gerada automaticamente pelo Vercel |
 
-### Variáveis de ambiente no Vercel
+### VariÃ¡veis de ambiente no Vercel
 
-As variáveis precisam estar configuradas para **cada ambiente** (Production e Preview).
-Para adicionar sem corrupção de newlines, usar a REST API do Vercel:
+As variÃ¡veis precisam estar configuradas para **cada ambiente** (Production e Preview).
+Para adicionar sem corrupÃ§Ã£o de newlines, usar a REST API do Vercel:
 
 ```bash
 # Token em: %APPDATA%\com.vercel.cli\Data\auth.json
@@ -103,23 +103,23 @@ curl -X POST https://api.vercel.com/v10/projects/prj_ATsXvj90CzsIS9eL4IwZCbTr4jn
   }'
 ```
 
-> **Atenção:** Não usar `vercel env add` via PowerShell — causa corrupção com `\r\n` nos valores.
+> **AtenÃ§Ã£o:** NÃ£o usar `vercel env add` via PowerShell â€” causa corrupÃ§Ã£o com `\r\n` nos valores.
 
 ---
 
-## Histórico de releases
+## HistÃ³rico de releases
 
-| Data | Release | Descrição |
+| Data | Release | DescriÃ§Ã£o |
 |------|---------|-----------|
-| 2026-03-03 | v1.0 | Deploy inicial — checkout, checkin, histórico, dashboard |
-| 2026-03-03 | v1.1 | Dark mode + anti-FOUC + PWA instalável |
-| 2026-03-03 | v1.2 | Fix: sincronização de status viagem/veículo |
+| 2026-03-03 | v1.0 | Deploy inicial â€” checkout, checkin, histÃ³rico, dashboard |
+| 2026-03-03 | v1.1 | Dark mode + anti-FOUC + PWA instalÃ¡vel |
+| 2026-03-03 | v1.2 | Fix: sincronizaÃ§Ã£o de status viagem/veÃ­culo |
 | 2026-03-03 | PR #13 | Fix: build falhando por middleware.ts conflitante + TypeScript types |
 
-### PR #13 — fix: build falhando por middleware.ts conflitante + TypeScript types (2026-03-03)
+### PR #13 â€” fix: build falhando por middleware.ts conflitante + TypeScript types (2026-03-03)
 **Problema raiz**: Todos os deploys estavam falhando (erro de build) desde o PR #9.
-Next.js 16 não aceita `middleware.ts` e `proxy.ts` simultaneamente — `proxy.ts` já é
+Next.js 16 nÃ£o aceita `middleware.ts` e `proxy.ts` simultaneamente â€” `proxy.ts` jÃ¡ Ã©
 o middleware nativo.
 - Remove `src/middleware.ts` (conflito com `proxy.ts` no Next.js 16)
-- Corrige tipos TypeScript implícitos em `dashboard/page.tsx`
+- Corrige tipos TypeScript implÃ­citos em `dashboard/page.tsx`
 - Primeiro deploy bem-sucedido desde PR #8

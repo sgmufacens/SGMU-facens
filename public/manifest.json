@@ -1,7 +1,7 @@
 {
-  "name": "FleetControl",
-  "short_name": "FleetControl",
-  "description": "Controle de frota empresarial",
+  "name": "SGMU",
+  "short_name": "SGMU",
+  "description": "Sistema de Gestão e Movimentação de Unidades",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

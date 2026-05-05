@@ -1,26 +1,26 @@
-# Guia de Migração — FleetControl
+﻿# Guia de MigraÃ§Ã£o â€” SGMU
 
-Este documento descreve os passos para migrar o FleetControl do ambiente atual
-(Supabase Storage + Vercel) para infraestrutura própria da empresa, cobrindo:
+Este documento descreve os passos para migrar o SGMU do ambiente atual
+(Supabase Storage + Vercel) para infraestrutura prÃ³pria da empresa, cobrindo:
 
-1. **Troca de domínio** (domínio próprio, independente de onde o app estiver hospedado)
-2. **Storage de imagens: Supabase → AWS S3**
+1. **Troca de domÃ­nio** (domÃ­nio prÃ³prio, independente de onde o app estiver hospedado)
+2. **Storage de imagens: Supabase â†’ AWS S3**
 
-> As seções estão ordenadas do menor para o maior impacto. Recomenda-se seguir essa ordem.
+> As seÃ§Ãµes estÃ£o ordenadas do menor para o maior impacto. Recomenda-se seguir essa ordem.
 
 ---
 
-## Parte 1 — Troca de Domínio
+## Parte 1 â€” Troca de DomÃ­nio
 
-### Pré-requisitos
-- Acesso ao painel de DNS do domínio (ex: Route 53, Registro.br, Cloudflare)
+### PrÃ©-requisitos
+- Acesso ao painel de DNS do domÃ­nio (ex: Route 53, Registro.br, Cloudflare)
 - Acesso ao painel do Vercel (enquanto o host ainda for Vercel)
 
 ### Passo a passo
 
-#### 1.1 Adicionar o domínio no Vercel
+#### 1.1 Adicionar o domÃ­nio no Vercel
 
-No painel Vercel → Settings → Domains → Add Domain:
+No painel Vercel â†’ Settings â†’ Domains â†’ Add Domain:
 
 ```
 fleet.suaempresa.com.br
@@ -42,9 +42,9 @@ No provedor de DNS da empresa, criar o registro apontado pelo Vercel:
 fleet.suaempresa.com.br  CNAME  cname.vercel-dns.com  TTL: 300
 ```
 
-> Se for domínio raiz (sem subdomínio), usar registro `A` com o IP fornecido pelo Vercel.
+> Se for domÃ­nio raiz (sem subdomÃ­nio), usar registro `A` com o IP fornecido pelo Vercel.
 
-#### 1.3 Aguardar propagação
+#### 1.3 Aguardar propagaÃ§Ã£o
 
 Normalmente leva de 5 minutos a 2 horas. Verificar com:
 
@@ -54,34 +54,34 @@ nslookup fleet.suaempresa.com.br
 dig fleet.suaempresa.com.br
 ```
 
-#### 1.4 Verificar HTTPS automático
+#### 1.4 Verificar HTTPS automÃ¡tico
 
 O Vercel emite certificado SSL automaticamente via Let's Encrypt.
-Após a propagação, `https://fleet.suaempresa.com.br` já estará funcionando.
+ApÃ³s a propagaÃ§Ã£o, `https://fleet.suaempresa.com.br` jÃ¡ estarÃ¡ funcionando.
 
 #### 1.5 (Opcional) Redirecionar URL antiga
 
-No Vercel → Settings → Domains, marcar o domínio antigo (`fleetapp-xi.vercel.app`)
-como redirecionamento para o novo domínio.
+No Vercel â†’ Settings â†’ Domains, marcar o domÃ­nio antigo (`fleetapp-xi.vercel.app`)
+como redirecionamento para o novo domÃ­nio.
 
 ---
 
-## Parte 2 — Migração de Storage: Supabase → AWS S3
+## Parte 2 â€” MigraÃ§Ã£o de Storage: Supabase â†’ AWS S3
 
-### Visão geral do que muda
+### VisÃ£o geral do que muda
 
-| Hoje | Após migração |
+| Hoje | ApÃ³s migraÃ§Ã£o |
 |------|--------------|
 | Supabase Storage (`fleet-photos`) | AWS S3 bucket |
-| URL pública do Supabase | URL do S3 ou CloudFront |
+| URL pÃºblica do Supabase | URL do S3 ou CloudFront |
 | Upload via `supabase.storage` | Upload via `@aws-sdk/client-s3` |
 
 ### Arquivos que precisam ser alterados
 
 ```
-src/app/(app)/checkout/page.tsx     — upload de fotos de saída
-src/app/(app)/checkin/page.tsx      — upload de fotos de chegada
-src/components/PhotoCapture.tsx     — (se o upload for centralizado aqui futuramente)
+src/app/(app)/checkout/page.tsx     â€” upload de fotos de saÃ­da
+src/app/(app)/checkin/page.tsx      â€” upload de fotos de chegada
+src/components/PhotoCapture.tsx     â€” (se o upload for centralizado aqui futuramente)
 ```
 
 ---
@@ -90,26 +90,26 @@ src/components/PhotoCapture.tsx     — (se o upload for centralizado aqui futur
 
 #### 2.1 Criar o bucket S3 na AWS
 
-No console AWS → S3 → Create Bucket:
+No console AWS â†’ S3 â†’ Create Bucket:
 
 ```
 Nome:   fleet-photos-suaempresa
-Região: sa-east-1 (São Paulo)
+RegiÃ£o: sa-east-1 (SÃ£o Paulo)
 ```
 
-**Configurações recomendadas:**
-- Block all public access: **DESATIVADO** (as fotos precisam ser acessíveis para exibição)
-  - Ou manter bloqueado e usar CloudFront com OAC (mais seguro — ver seção 2.5)
+**ConfiguraÃ§Ãµes recomendadas:**
+- Block all public access: **DESATIVADO** (as fotos precisam ser acessÃ­veis para exibiÃ§Ã£o)
+  - Ou manter bloqueado e usar CloudFront com OAC (mais seguro â€” ver seÃ§Ã£o 2.5)
 
-#### 2.2 Criar usuário IAM para o app
+#### 2.2 Criar usuÃ¡rio IAM para o app
 
-No console AWS → IAM → Users → Create User:
+No console AWS â†’ IAM â†’ Users â†’ Create User:
 
 ```
-Nome: fleetcontrol-app
+Nome: SGMU-app
 ```
 
-Política a anexar (criar como inline policy):
+PolÃ­tica a anexar (criar como inline policy):
 
 ```json
 {
@@ -128,9 +128,9 @@ Política a anexar (criar como inline policy):
 }
 ```
 
-Gerar **Access Key ID** e **Secret Access Key** — guardar com segurança.
+Gerar **Access Key ID** e **Secret Access Key** â€” guardar com seguranÃ§a.
 
-#### 2.3 Adicionar variáveis de ambiente
+#### 2.3 Adicionar variÃ¡veis de ambiente
 
 No Vercel (ou no provedor de hospedagem escolhido), adicionar:
 
@@ -151,7 +151,7 @@ npm install @aws-sdk/client-s3
 
 #### 2.5 Criar a API Route de upload
 
-Criar `src/app/api/upload/route.ts` — o upload passa pelo servidor para não expor as credenciais AWS no browser:
+Criar `src/app/api/upload/route.ts` â€” o upload passa pelo servidor para nÃ£o expor as credenciais AWS no browser:
 
 ```ts
 export const dynamic = 'force-dynamic'
@@ -174,7 +174,7 @@ export async function POST(req: NextRequest) {
   const folder = (formData.get('folder') as string) ?? 'uploads'
 
   if (!file) {
-    return NextResponse.json({ error: 'Arquivo obrigatório' }, { status: 400 })
+    return NextResponse.json({ error: 'Arquivo obrigatÃ³rio' }, { status: 400 })
   }
 
   const ext = file.name.split('.').pop() ?? 'jpg'
@@ -200,7 +200,7 @@ export async function POST(req: NextRequest) {
 Em `src/app/(app)/checkout/page.tsx`, substituir o bloco de upload do Supabase:
 
 ```ts
-// ANTES — Supabase Storage
+// ANTES â€” Supabase Storage
 async function uploadPhotos(files: File[], folder: string): Promise<string[]> {
   const urls: string[] = []
   for (const file of files) {
@@ -217,7 +217,7 @@ async function uploadPhotos(files: File[], folder: string): Promise<string[]> {
   return urls
 }
 
-// DEPOIS — AWS S3 via API Route
+// DEPOIS â€” AWS S3 via API Route
 async function uploadPhotos(files: File[], folder: string): Promise<string[]> {
   const urls: string[] = []
   for (const file of files) {
@@ -233,18 +233,18 @@ async function uploadPhotos(files: File[], folder: string): Promise<string[]> {
 }
 ```
 
-Aplicar a mesma mudança em `src/app/(app)/checkin/page.tsx`.
+Aplicar a mesma mudanÃ§a em `src/app/(app)/checkin/page.tsx`.
 
 #### 2.7 Migrar fotos existentes do Supabase para o S3
 
-As fotos já registradas no banco têm URLs do Supabase. Para migrá-las:
+As fotos jÃ¡ registradas no banco tÃªm URLs do Supabase. Para migrÃ¡-las:
 
 ```bash
 # 1. Listar todos os objetos no bucket do Supabase
-# (via painel Supabase → Storage → fleet-photos)
+# (via painel Supabase â†’ Storage â†’ fleet-photos)
 
 # 2. Baixar cada arquivo e re-enviar para o S3
-# Script de migração (Node.js):
+# Script de migraÃ§Ã£o (Node.js):
 ```
 
 ```js
@@ -282,68 +282,68 @@ for (const trip of trips) {
 }
 ```
 
-> **Nota:** Este script deve ser executado uma única vez antes de remover o bucket do Supabase.
-> Manter o bucket do Supabase ativo por pelo menos 30 dias após a migração como fallback.
+> **Nota:** Este script deve ser executado uma Ãºnica vez antes de remover o bucket do Supabase.
+> Manter o bucket do Supabase ativo por pelo menos 30 dias apÃ³s a migraÃ§Ã£o como fallback.
 
 #### 2.8 (Recomendado) Configurar CloudFront na frente do S3
 
 O CloudFront melhora a performance das imagens com cache global e habilita HTTPS sem expor o bucket diretamente.
 
-No console AWS → CloudFront → Create Distribution:
+No console AWS â†’ CloudFront â†’ Create Distribution:
 
 ```
 Origin Domain: fleet-photos-suaempresa.s3.sa-east-1.amazonaws.com
-Origin Access: Origin access control (OAC)  ← mais seguro que público
+Origin Access: Origin access control (OAC)  â† mais seguro que pÃºblico
 Viewer Protocol Policy: Redirect HTTP to HTTPS
 Cache Policy: CachingOptimized
 ```
 
-Após criar, atualizar a variável `AWS_CLOUDFRONT_URL` com o domínio gerado
+ApÃ³s criar, atualizar a variÃ¡vel `AWS_CLOUDFRONT_URL` com o domÃ­nio gerado
 (ex: `https://xxxxxxxx.cloudfront.net`).
 
 ---
 
-## Checklist de Migração
+## Checklist de MigraÃ§Ã£o
 
-### Domínio
-- [ ] Adicionar domínio no Vercel (ou no novo host)
+### DomÃ­nio
+- [ ] Adicionar domÃ­nio no Vercel (ou no novo host)
 - [ ] Criar registro DNS no provedor
-- [ ] Verificar propagação DNS
+- [ ] Verificar propagaÃ§Ã£o DNS
 - [ ] Confirmar HTTPS funcionando
-- [ ] (Opcional) Redirecionar domínio antigo
+- [ ] (Opcional) Redirecionar domÃ­nio antigo
 
 ### Storage S3
 - [ ] Criar bucket S3
-- [ ] Criar usuário IAM com política mínima
+- [ ] Criar usuÃ¡rio IAM com polÃ­tica mÃ­nima
 - [ ] Gerar Access Key + Secret Key
-- [ ] Adicionar variáveis de ambiente no host
+- [ ] Adicionar variÃ¡veis de ambiente no host
 - [ ] Instalar `@aws-sdk/client-s3`
 - [ ] Criar `src/app/api/upload/route.ts`
-- [ ] Atualizar `checkout/page.tsx` — trocar função uploadPhotos
-- [ ] Atualizar `checkin/page.tsx` — trocar função uploadPhotos
+- [ ] Atualizar `checkout/page.tsx` â€” trocar funÃ§Ã£o uploadPhotos
+- [ ] Atualizar `checkin/page.tsx` â€” trocar funÃ§Ã£o uploadPhotos
 - [ ] (Opcional) Configurar CloudFront
-- [ ] Executar script de migração das fotos existentes
-- [ ] Verificar exibição das fotos antigas (banco atualizado com novas URLs)
+- [ ] Executar script de migraÃ§Ã£o das fotos existentes
+- [ ] Verificar exibiÃ§Ã£o das fotos antigas (banco atualizado com novas URLs)
 - [ ] Testar fluxo completo de checkout + checkin com novas fotos
 - [ ] Manter bucket Supabase por 30 dias como fallback
-- [ ] Remover bucket Supabase após validação
+- [ ] Remover bucket Supabase apÃ³s validaÃ§Ã£o
 
 ---
 
-## Variáveis de ambiente — antes e depois
+## VariÃ¡veis de ambiente â€” antes e depois
 
-| Variável | Atual (Supabase) | Após migração S3 |
+| VariÃ¡vel | Atual (Supabase) | ApÃ³s migraÃ§Ã£o S3 |
 |---------|-----------------|-----------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Mantém | Mantém (banco ainda é Supabase) |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Mantém | Mantém |
-| `SUPABASE_SERVICE_ROLE_KEY` | Mantém | Mantém |
-| `ADMIN_PASSWORD` | Mantém | Mantém |
-| `AWS_REGION` | — | `sa-east-1` |
-| `AWS_ACCESS_KEY_ID` | — | Key do usuário IAM |
-| `AWS_SECRET_ACCESS_KEY` | — | Secret do usuário IAM |
-| `AWS_S3_BUCKET` | — | Nome do bucket |
-| `AWS_CLOUDFRONT_URL` | — | URL do CloudFront (se configurado) |
+| `NEXT_PUBLIC_SUPABASE_URL` | MantÃ©m | MantÃ©m (banco ainda Ã© Supabase) |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | MantÃ©m | MantÃ©m |
+| `SUPABASE_SERVICE_ROLE_KEY` | MantÃ©m | MantÃ©m |
+| `ADMIN_PASSWORD` | MantÃ©m | MantÃ©m |
+| `AWS_REGION` | â€” | `sa-east-1` |
+| `AWS_ACCESS_KEY_ID` | â€” | Key do usuÃ¡rio IAM |
+| `AWS_SECRET_ACCESS_KEY` | â€” | Secret do usuÃ¡rio IAM |
+| `AWS_S3_BUCKET` | â€” | Nome do bucket |
+| `AWS_CLOUDFRONT_URL` | â€” | URL do CloudFront (se configurado) |
 
-> O banco de dados (PostgreSQL via Supabase) **não é alterado** nesta migração.
-> Este guia cobre apenas storage e domínio.
+> O banco de dados (PostgreSQL via Supabase) **nÃ£o Ã© alterado** nesta migraÃ§Ã£o.
+> Este guia cobre apenas storage e domÃ­nio.
 > Para migrar o banco e o host completo, consultar o roadmap em `ARCHITECTURE.md`.

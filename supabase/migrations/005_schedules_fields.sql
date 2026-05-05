@@ -1,4 +1,4 @@
--- FleetControl - Schedules extra fields
+﻿-- SGMU - Schedules extra fields
 -- Migration: 005_schedules_fields
 -- Adds origin_branch_id and destination_description to schedules
 

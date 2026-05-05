@@ -1,6 +1,6 @@
--- FleetControl - Admin Policies
+﻿-- SGMU - Admin Policies
 -- Migration: 003_admin_policies
--- Adiciona permissões de escrita para o painel de administração
+-- Adiciona permissÃµes de escrita para o painel de administraÃ§Ã£o
 --
 -- Execute este SQL no Supabase SQL Editor
 

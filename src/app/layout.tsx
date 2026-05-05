@@ -8,10 +8,10 @@ import { ServiceWorkerRegistration } from '@/components/ServiceWorkerRegistratio
 const geist = Geist({ subsets: ['latin'], variable: '--font-geist-sans' })
 
 export const metadata: Metadata = {
-  title: 'FleetControl',
-  description: 'Controle de frota empresarial',
+  title: 'SGMU',
+  description: 'Sistema de Gestão e Movimentação de Unidades',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'FleetControl' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'SGMU' },
 }
 
 export const viewport: Viewport = {

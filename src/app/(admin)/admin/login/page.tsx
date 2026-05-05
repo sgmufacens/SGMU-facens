@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
           <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
             <Car className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-white font-bold text-xl">FleetControl</h1>
+          <h1 className="text-white font-bold text-xl">SGMU</h1>
           <p className="text-slate-400 text-sm mt-1">Painel de Administração</p>
         </div>
 
