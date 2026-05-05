@@ -1,5 +1,5 @@
 // SGMU Service Worker
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const STATIC_CACHE = `sgmu-static-${CACHE_VERSION}`
 const RUNTIME_CACHE = `sgmu-runtime-${CACHE_VERSION}`
 
@@ -43,19 +43,16 @@ self.addEventListener('fetch', (event) => {
   if (url.hostname.includes('supabase.co')) return
   if (url.hostname.includes('supabase.com')) return
 
-  // Recursos estáticos Next.js → cache first
+  // Recursos estáticos Next.js → network first (garante código atualizado)
   if (url.pathname.startsWith('/_next/static/')) {
     event.respondWith(
-      caches.match(request).then(cached => {
-        if (cached) return cached
-        return fetch(request).then(response => {
-          if (response.ok) {
-            const clone = response.clone()
-            caches.open(STATIC_CACHE).then(cache => cache.put(request, clone))
-          }
-          return response
-        })
-      })
+      fetch(request).then(response => {
+        if (response.ok) {
+          const clone = response.clone()
+          caches.open(STATIC_CACHE).then(cache => cache.put(request, clone))
+        }
+        return response
+      }).catch(() => caches.match(request))
     )
     return
   }

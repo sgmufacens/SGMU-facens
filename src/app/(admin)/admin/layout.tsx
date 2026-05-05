@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Car, Users, Building2, History, ArrowLeft, Settings, LogOut, Calendar, LayoutDashboard } from 'lucide-react'
+import { Car, Users, Building2, History, ArrowLeft, Settings, LogOut, Calendar, LayoutDashboard, Route, Bell } from 'lucide-react'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
 const navItems = [
@@ -10,6 +10,8 @@ const navItems = [
   { href: '/admin/vehicles',      label: 'Veículos',       icon: Car },
   { href: '/admin/collaborators', label: 'Colaboradores',  icon: Users },
   { href: '/admin/branches',      label: 'Filiais',        icon: Building2 },
+  { href: '/admin/rotas',         label: 'Rotas',          icon: Route },
+  { href: '/admin/chamados',      label: 'Chamados',       icon: Bell },
   { href: '/admin/history',       label: 'Histórico',      icon: History },
   { href: '/admin/schedules',     label: 'Agendamentos',   icon: Calendar },
 ]

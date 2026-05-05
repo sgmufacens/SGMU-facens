@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const { name, badge_number, branch_id } = await req.json()
+  const { name, badge_number, branch_id, phone } = await req.json()
   if (!name || !badge_number) {
     return NextResponse.json({ error: 'Nome e setor são obrigatórios' }, { status: 400 })
   }
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   const supabaseAdmin = getSupabaseAdmin()
   const { data, error } = await supabaseAdmin
     .from('collaborators')
-    .insert({ name, badge_number, branch_id: branch_id || null, is_active: true })
+    .insert({ name, badge_number, branch_id: branch_id || null, phone: phone || null, is_active: true })
     .select('*, branch:branches(name, city)')
     .single()
 
@@ -60,7 +60,7 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }
 
-  const { id, name, badge_number, branch_id, is_active } = await req.json()
+  const { id, name, badge_number, branch_id, phone, is_active } = await req.json()
   if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 })
 
   const supabaseAdmin = getSupabaseAdmin()
@@ -68,6 +68,7 @@ export async function PUT(req: NextRequest) {
   if (name !== undefined) payload.name = name
   if (badge_number !== undefined) payload.badge_number = badge_number
   if (branch_id !== undefined) payload.branch_id = branch_id || null
+  if (phone !== undefined) payload.phone = phone || null
   if (is_active !== undefined) payload.is_active = is_active
 
   const { data, error } = await supabaseAdmin

@@ -31,6 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .eq('user_id', userId)
       .maybeSingle()
     setCollaborator(data)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -49,10 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     return () => subscription.unsubscribe()
   }, [])
-
-  useEffect(() => {
-    if (user !== undefined) setLoading(false)
-  }, [user, collaborator])
 
   async function signOut() {
     await supabase.auth.signOut()

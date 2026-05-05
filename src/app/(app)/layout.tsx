@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Car, LayoutDashboard, PlusCircle, LogOut, Calendar } from 'lucide-react'
+import { Car, LayoutDashboard, PlusCircle, LogOut, Calendar, Navigation } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -62,6 +62,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Link href="/schedules" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
           <Calendar className="w-5 h-5" />
           Agenda
+        </Link>
+        <Link href="/ronda" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
+          <Navigation className="w-5 h-5" />
+          Ronda
         </Link>
         <Link href="/checkin" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
           <Car className="w-5 h-5" />

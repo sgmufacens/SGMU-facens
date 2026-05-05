@@ -68,9 +68,9 @@ export default function CheckinPage() {
       for (const photoB64 of allPhotos) {
         const blob = await (await fetch(photoB64)).blob()
         const fileName = `checkin/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-        const { data: uploaded, error } = await supabase.storage.from('fleet-photos').upload(fileName, blob, { contentType: 'image/jpeg' })
+        const { data: uploaded, error } = await supabase.storage.from('sgmu-app').upload(fileName, blob, { contentType: 'image/jpeg' })
         if (error) throw error
-        const { data: { publicUrl } } = supabase.storage.from('fleet-photos').getPublicUrl(uploaded.path)
+        const { data: { publicUrl } } = supabase.storage.from('sgmu-app').getPublicUrl(uploaded.path)
         uploadedUrls.push(publicUrl)
       }
 

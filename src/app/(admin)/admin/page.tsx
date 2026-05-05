@@ -1,11 +1,23 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { Car, Users, Clock, Calendar, CheckCircle, Wrench, AlertTriangle } from 'lucide-react'
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Car, Users, Clock, Calendar, CheckCircle, Wrench, AlertTriangle, Siren, MapPin, Phone } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Vehicle, Trip, Schedule } from '@/types'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+
+type Alert = {
+  id: string
+  type: 'sos' | 'vehicle_breakdown' | 'other'
+  notes: string | null
+  lat: number | null
+  lng: number | null
+  status: 'open' | 'resolved'
+  created_at: string
+  collaborator: { name: string; phone: string | null } | null
+  vehicle: { plate: string; model: string } | null
+}
 
 interface VehicleWithTrip extends Vehicle {
   activeTrip?: Trip & { collaborator?: { name: string; badge_number: string } }
@@ -14,8 +26,10 @@ interface VehicleWithTrip extends Vehicle {
 export default function AdminDashboardPage() {
   const [vehicles, setVehicles] = useState<VehicleWithTrip[]>([])
   const [schedulesToday, setSchedulesToday] = useState<Schedule[]>([])
+  const [openAlerts, setOpenAlerts] = useState<Alert[]>([])
   const [loading, setLoading] = useState(true)
   const [lastUpdated, setLastUpdated] = useState(new Date())
+  const alertPollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const load = useCallback(async () => {
     const todayStart = new Date()
@@ -23,7 +37,7 @@ export default function AdminDashboardPage() {
     const todayEnd = new Date()
     todayEnd.setHours(23, 59, 59, 999)
 
-    const [{ data: vData }, { data: tData }, { data: sData }] = await Promise.all([
+    const [{ data: vData }, { data: tData }, { data: sData }, { data: aData }] = await Promise.all([
       supabase.from('vehicles').select('*, branch:branches(name,city)').order('plate'),
       supabase.from('trips')
         .select('*, collaborator:collaborators(name,badge_number)')
@@ -34,6 +48,10 @@ export default function AdminDashboardPage() {
         .gte('scheduled_departure', todayStart.toISOString())
         .lte('scheduled_departure', todayEnd.toISOString())
         .order('scheduled_departure', { ascending: true }),
+      supabase.from('alerts')
+        .select('*, collaborator:collaborators(name,phone), vehicle:vehicles(plate,model)')
+        .eq('status', 'open')
+        .order('created_at', { ascending: false }),
     ])
 
     // Mescla viagens ativas nos veículos
@@ -47,14 +65,41 @@ export default function AdminDashboardPage() {
 
     setVehicles(merged)
     setSchedulesToday(sData ?? [])
+    setOpenAlerts((aData ?? []) as Alert[])
     setLastUpdated(new Date())
     setLoading(false)
+  }, [])
+
+  // Polling de alertas a cada 10s (fallback caso Realtime não esteja ativo)
+  const pollAlerts = useCallback(async () => {
+    const { data } = await supabase
+      .from('alerts')
+      .select('*, collaborator:collaborators(name,phone), vehicle:vehicles(plate,model)')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+    if (data) setOpenAlerts(data as Alert[])
   }, [])
 
   // Carga inicial
   useEffect(() => { load() }, [load])
 
-  // Supabase Realtime
+  // Polling de alertas a cada 5s — independente do Realtime
+  useEffect(() => {
+    alertPollRef.current = setInterval(pollAlerts, 5_000)
+    return () => { if (alertPollRef.current) clearInterval(alertPollRef.current) }
+  }, [pollAlerts])
+
+  // Supabase Realtime — canal separado para alertas evita conflito com outros handlers
+  useEffect(() => {
+    const alertChannel = supabase
+      .channel('admin-alerts-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alerts' }, () => pollAlerts())
+      .subscribe()
+
+    return () => { supabase.removeChannel(alertChannel) }
+  }, [pollAlerts])
+
+  // Supabase Realtime — frota
   useEffect(() => {
     const channel = supabase
       .channel('admin-dashboard-live')
@@ -65,6 +110,11 @@ export default function AdminDashboardPage() {
 
     return () => { supabase.removeChannel(channel) }
   }, [load])
+
+  async function resolveAlert(id: string) {
+    await supabase.from('alerts').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id)
+    setOpenAlerts(prev => prev.filter(a => a.id !== id))
+  }
 
   const counts = {
     total: vehicles.length,
@@ -83,6 +133,75 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
+
+      {/* ── Alertas abertos (SOS / Problema de veículo) ── */}
+      {openAlerts.length > 0 && (
+        <section className="space-y-2">
+          {openAlerts.map(alert => {
+            const isSos = alert.type === 'sos'
+            const phone = alert.collaborator?.phone
+            return (
+              <div key={alert.id} className={`border-2 rounded-xl p-4 ${
+                isSos
+                  ? 'bg-red-50 border-red-400 dark:bg-red-900/30 dark:border-red-600'
+                  : 'bg-amber-50 border-amber-400 dark:bg-amber-900/30 dark:border-amber-600'
+              }`}>
+                {/* Cabeçalho */}
+                <div className="flex items-center gap-2">
+                  {isSos
+                    ? <Siren className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 animate-pulse" />
+                    : <Wrench className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />}
+                  <p className={`font-bold text-sm ${isSos ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
+                    {isSos ? 'SOS — Emergência' : 'Problema com veículo'}
+                  </p>
+                  <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
+                    {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
+                  </span>
+                </div>
+
+                {/* Colaborador + veículo */}
+                <p className="text-sm text-slate-700 dark:text-slate-200 mt-2">
+                  <span className="font-semibold">{alert.collaborator?.name ?? 'Colaborador'}</span>
+                  {alert.vehicle && <span className="text-slate-500 dark:text-slate-400"> · {alert.vehicle.plate} {alert.vehicle.model}</span>}
+                </p>
+
+                {alert.notes && (
+                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 italic bg-white/60 dark:bg-black/20 rounded-lg px-2.5 py-1.5">"{alert.notes}"</p>
+                )}
+
+                {/* Ações */}
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
+                  {phone && (
+                    <a
+                      href={`tel:${phone}`}
+                      className="flex items-center gap-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors"
+                    >
+                      <Phone className="w-3.5 h-3.5" /> Ligar — {phone}
+                    </a>
+                  )}
+                  {alert.lat && alert.lng && (
+                    <a
+                      href={`https://maps.google.com/?q=${alert.lat},${alert.lng}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 border border-blue-200 dark:border-blue-800 px-2.5 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors"
+                    >
+                      <MapPin className="w-3.5 h-3.5" /> Ver no mapa
+                    </a>
+                  )}
+                  <button
+                    onClick={() => resolveAlert(alert.id)}
+                    className="ml-auto flex items-center gap-1 text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" /> Resolver
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </section>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800">Dashboard</h1>

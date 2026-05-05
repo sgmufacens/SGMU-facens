@@ -116,15 +116,25 @@ function CheckoutPageContent() {
   }
 
   async function advanceFromVehicle() {
-    const valid = await trigger('vehicle_id')
-    if (!valid || !selectedVehicleId) return
+    if (!selectedVehicleId) return
     markComplete('vehicle')
     setStep('details')
   }
 
   async function advanceFromDetails() {
-    const valid = await trigger(['origin_branch_id', 'collaborator_id', 'km_departure'])
-    if (!valid) return
+    if (!watch('origin_branch_id')) {
+      alert('Selecione a filial de origem.')
+      return
+    }
+    if (!currentUser) {
+      alert('Colaborador não identificado. Faça login novamente.')
+      return
+    }
+    const km = watch('km_departure')
+    if (km === undefined || km === null || String(km) === '') {
+      alert('Informe o KM atual do veículo.')
+      return
+    }
     markComplete('details')
     setStep('photos')
   }
@@ -145,9 +155,9 @@ function CheckoutPageContent() {
       for (const photoB64 of allPhotos) {
         const blob = await (await fetch(photoB64)).blob()
         const fileName = `checkout/${Date.now()}-${Math.random().toString(36).slice(2)}.jpg`
-        const { data: uploaded, error } = await supabase.storage.from('fleet-photos').upload(fileName, blob, { contentType: 'image/jpeg' })
+        const { data: uploaded, error } = await supabase.storage.from('sgmu-app').upload(fileName, blob, { contentType: 'image/jpeg' })
         if (error) throw error
-        const { data: { publicUrl } } = supabase.storage.from('fleet-photos').getPublicUrl(uploaded.path)
+        const { data: { publicUrl } } = supabase.storage.from('sgmu-app').getPublicUrl(uploaded.path)
         uploadedUrls.push(publicUrl)
       }
 
@@ -290,13 +300,18 @@ function CheckoutPageContent() {
               <label className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1">
                 <User className="w-3 h-3" /> Colaborador
               </label>
-              <div className="flex items-center gap-3 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 rounded-lg px-3 py-2.5">
+              <div className={`flex items-center gap-3 border rounded-lg px-3 py-2.5 ${currentUser ? 'border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800' : 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20'}`}>
                 <div className="w-7 h-7 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center shrink-0">
                   <span className="text-blue-700 dark:text-blue-400 font-semibold text-xs">{currentUser?.name?.charAt(0) ?? '?'}</span>
                 </div>
                 <div>
-                  <p className="font-medium text-slate-800 dark:text-slate-100 text-sm">{currentUser?.name ?? 'Carregando...'}</p>
-                  {currentUser?.badge_number && <p className="text-xs text-slate-500 dark:text-slate-400">Setor: {currentUser.badge_number}</p>}
+                  <p className="font-medium text-slate-800 dark:text-slate-100 text-sm">
+                    {currentUser?.name ?? 'Colaborador não identificado'}
+                  </p>
+                  {currentUser?.badge_number
+                    ? <p className="text-xs text-slate-500 dark:text-slate-400">Setor: {currentUser.badge_number}</p>
+                    : !currentUser && <p className="text-xs text-red-500">Verifique se seu usuário está vinculado a um colaborador.</p>
+                  }
                 </div>
               </div>
               <input type="hidden" {...register('collaborator_id')} />

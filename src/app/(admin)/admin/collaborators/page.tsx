@@ -6,8 +6,8 @@ import { supabase } from '@/lib/supabase'
 import { AdminModal } from '@/components/AdminModal'
 import type { Collaborator, Branch } from '@/types'
 
-type FormState = { name: string; badge_number: string; branch_id: string }
-const EMPTY: FormState = { name: '', badge_number: '', branch_id: '' }
+type FormState = { name: string; badge_number: string; branch_id: string; phone: string }
+const EMPTY: FormState = { name: '', badge_number: '', branch_id: '', phone: '' }
 type AccessForm = { email: string; password: string }
 
 export default function CollaboratorsPage() {
@@ -35,7 +35,7 @@ export default function CollaboratorsPage() {
   function openAdd() { setForm(EMPTY); setEditing(null); setModal('add') }
 
   function openEdit(c: Collaborator) {
-    setForm({ name: c.name, badge_number: c.badge_number, branch_id: c.branch_id ?? '' })
+    setForm({ name: c.name, badge_number: c.badge_number, branch_id: c.branch_id ?? '', phone: (c as any).phone ?? '' })
     setEditing(c)
     setModal('edit')
   }
@@ -50,7 +50,7 @@ export default function CollaboratorsPage() {
     if (!form.name || !form.badge_number) return
     setSaving(true)
     try {
-      const payload = { name: form.name, badge_number: form.badge_number, branch_id: form.branch_id || null }
+      const payload = { name: form.name, badge_number: form.badge_number, branch_id: form.branch_id || null, phone: form.phone || null }
       const res = editing
         ? await fetch('/api/admin/collaborators', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...payload }) })
         : await fetch('/api/admin/collaborators', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
@@ -131,6 +131,7 @@ export default function CollaboratorsPage() {
                 <div>
                   <p className="font-semibold text-slate-800">{c.name}</p>
                   <p className="text-sm text-slate-500">Setor: {c.badge_number}</p>
+                  {(c as any).phone && <p className="text-xs text-slate-400">{(c as any).phone}</p>}
                   {(c.branch as any) && <p className="text-xs text-slate-400">{(c.branch as any).name}</p>}
                 </div>
               </div>
@@ -170,6 +171,7 @@ export default function CollaboratorsPage() {
           <div className="space-y-3">
             <Field label="Nome completo *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="João Silva" />
             <Field label="Setor *" value={form.badge_number} onChange={v => setForm(f => ({ ...f, badge_number: v }))} placeholder="TI, Comercial, Logística..." />
+            <Field label="Telefone" value={form.phone} onChange={v => setForm(f => ({ ...f, phone: v }))} placeholder="(11) 99999-9999" type="tel" />
             <div>
               <label className="text-sm font-medium text-slate-700 mb-1 block">Filial</label>
               <select value={form.branch_id} onChange={e => setForm(f => ({ ...f, branch_id: e.target.value }))} className="w-full border border-slate-300 rounded-lg px-3 py-2.5 bg-white">
