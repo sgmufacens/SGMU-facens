@@ -17,25 +17,30 @@ const STATUS_MAP: Record<string, { label: string; className: string }> = {
 }
 
 export default function SchedulesPage() {
-  const { collaborator } = useAuth()
+  const { collaborator, loading: authLoading } = useAuth()
   const [schedules, setSchedules] = useState<Schedule[]>([])
   const [loading, setLoading] = useState(true)
   const [cancelling, setCancelling] = useState<string | null>(null)
 
   async function load() {
-    if (!collaborator) return
-    // Cancela automaticamente agendamentos vencidos (sem retirada no horário)
-    await fetch('/api/schedules/expire', { method: 'POST' })
-    const { data } = await supabase
-      .from('schedules')
-      .select('*, vehicle:vehicles(plate,brand,model,year), origin_branch:branches!schedules_origin_branch_id_fkey(name,city), destination_branch:branches!schedules_destination_branch_id_fkey(name,city)')
-      .eq('collaborator_id', collaborator.id)
-      .order('scheduled_departure', { ascending: true })
-    setSchedules(data ?? [])
-    setLoading(false)
+    if (!collaborator) { setLoading(false); return }
+    try {
+      await fetch('/api/schedules/expire', { method: 'POST' })
+      const { data } = await supabase
+        .from('schedules')
+        .select('*, vehicle:vehicles(plate,brand,model,year), origin_branch:branches!schedules_origin_branch_id_fkey(name,city), destination_branch:branches!schedules_destination_branch_id_fkey(name,city)')
+        .eq('collaborator_id', collaborator.id)
+        .order('scheduled_departure', { ascending: true })
+      setSchedules(data ?? [])
+    } finally {
+      setLoading(false)
+    }
   }
 
-  useEffect(() => { load() }, [collaborator])
+  useEffect(() => {
+    if (authLoading) return
+    load()
+  }, [collaborator, authLoading])
 
   async function cancel(id: string) {
     setCancelling(id)

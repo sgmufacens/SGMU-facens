@@ -1,7 +1,7 @@
 {
-  "name": "SGMU",
-  "short_name": "SGMU",
-  "description": "Sistema de Gestão e Movimentação de Unidades",
+  "name": "S.I.R.U",
+  "short_name": "S.I.R.U",
+  "description": "Sistema Inteligente de Ronda Urbana",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

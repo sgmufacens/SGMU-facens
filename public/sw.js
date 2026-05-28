@@ -1,7 +1,7 @@
-// SGMU Service Worker
-const CACHE_VERSION = 'v2'
-const STATIC_CACHE = `sgmu-static-${CACHE_VERSION}`
-const RUNTIME_CACHE = `sgmu-runtime-${CACHE_VERSION}`
+// S.I.R.U Service Worker
+const CACHE_VERSION = 'v3'
+const STATIC_CACHE = `siru-static-${CACHE_VERSION}`
+const RUNTIME_CACHE = `siru-runtime-${CACHE_VERSION}`
 
 // Recursos para pré-cachear na instalação
 const PRECACHE_URLS = [

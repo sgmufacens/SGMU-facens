@@ -190,7 +190,7 @@ export default function CollaboratorsPage() {
         <AdminModal title={`Criar acesso — ${accessTarget.name}`} onClose={() => setModal(null)}>
           <div className="space-y-3">
             <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-sm text-blue-800">
-              O colaborador usará este e-mail e senha para entrar no SGMU.
+              O colaborador usará este e-mail e senha para entrar no S.I.R.U.
             </div>
             <Field label="E-mail *" value={accessForm.email} onChange={v => setAccessForm(f => ({ ...f, email: v }))} placeholder="joao.silva@empresa.com" type="email" />
             <Field label="Senha *" value={accessForm.password} onChange={v => setAccessForm(f => ({ ...f, password: v }))} placeholder="Mínimo 6 caracteres" type="password" />

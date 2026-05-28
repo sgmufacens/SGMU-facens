@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
-import { Navigation, MapPin, Square, AlertTriangle, Wifi, WifiOff, Clock, Siren, Wrench, X, CheckCircle } from 'lucide-react'
+import { Navigation, MapPin, Square, AlertTriangle, Wifi, WifiOff, Clock, Siren, Wrench, X, CheckCircle, LocateFixed, Construction, ZapOff, Ban } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import type { RoutePoint, RouteLayer } from '@/components/RouteMap'
@@ -16,61 +16,80 @@ type ActiveTrip = {
   vehicle: { id: string; plate: string; model: string; brand: string }
 }
 
-type AlertFeedback = { type: 'sos' | 'vehicle_breakdown'; sent: boolean }
+type AlertType = 'sos' | 'vehicle_breakdown' | 'pothole' | 'lighting_failure' | 'obstruction' | 'other'
+type AlertFeedback = { type: AlertType; sent: boolean }
+type GpsPermission = 'unknown' | 'granted' | 'denied' | 'unavailable'
 
-const GPS_INTERVAL_MS = 10_000
+const SAVE_INTERVAL_MS = 10_000
 const ROUTE_COLOR = '#1d4ed8'
 
 function getCurrentPosition(): Promise<GeolocationPosition> {
   return new Promise((resolve, reject) =>
     navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true, timeout: 8000, maximumAge: 0,
+      enableHighAccuracy: true, timeout: 10000, maximumAge: 0,
     })
   )
 }
 
 export default function RondaPage() {
-  const { collaborator } = useAuth()
+  const { collaborator, loading: authLoading } = useAuth()
   const [activeTrip, setActiveTrip] = useState<ActiveTrip | null>(null)
   const [points, setPoints] = useState<RoutePoint[]>([])
   const [tracking, setTracking] = useState(false)
+  const [gpsPermission, setGpsPermission] = useState<GpsPermission>('unknown')
   const [gpsError, setGpsError] = useState<string | null>(null)
   const [lastPoint, setLastPoint] = useState<RoutePoint | null>(null)
   const [loading, setLoading] = useState(true)
   const [elapsed, setElapsed] = useState('')
 
-  // Alert states
   const [showBreakdownModal, setShowBreakdownModal] = useState(false)
   const [breakdownNotes, setBreakdownNotes] = useState('')
+  const [showUrbanModal, setShowUrbanModal] = useState(false)
+  const [urbanType, setUrbanType] = useState<'pothole' | 'lighting_failure' | 'obstruction' | 'custom'>('pothole')
+  const [urbanCustomType, setUrbanCustomType] = useState('')
+  const [urbanNotes, setUrbanNotes] = useState('')
+  const [urbanStreet, setUrbanStreet] = useState('')
   const [sendingAlert, setSendingAlert] = useState(false)
   const [alertFeedback, setAlertFeedback] = useState<AlertFeedback | null>(null)
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [livePosition, setLivePosition] = useState<[number, number] | null>(null)
+
+  const watchIdRef = useRef<number | null>(null)
+  const lastSaveRef = useRef<number>(0)
   const clockRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const activeTripIdRef = useRef<string | null>(null)
 
   const loadTripData = useCallback(async () => {
-    if (!collaborator) return
-    const { data: trip } = await supabase
-      .from('trips')
-      .select('id, departed_at, km_departure, vehicle:vehicles(id, plate, model, brand)')
-      .eq('collaborator_id', collaborator.id)
-      .eq('status', 'open')
-      .maybeSingle()
+    if (!collaborator) { setLoading(false); return }
+    try {
+      const { data: trip } = await supabase
+        .from('trips')
+        .select('id, departed_at, km_departure, vehicle:vehicles(id, plate, model, brand)')
+        .eq('collaborator_id', collaborator.id)
+        .eq('status', 'open')
+        .maybeSingle()
 
-    if (trip) {
-      setActiveTrip(trip as unknown as ActiveTrip)
-      const { data: pts } = await supabase
-        .from('route_points')
-        .select('lat, lng, recorded_at')
-        .eq('trip_id', trip.id)
-        .order('recorded_at', { ascending: true })
-      setPoints(pts ?? [])
+      if (trip) {
+        setActiveTrip(trip as unknown as ActiveTrip)
+        activeTripIdRef.current = trip.id
+        const { data: pts } = await supabase
+          .from('route_points')
+          .select('lat, lng, recorded_at')
+          .eq('trip_id', trip.id)
+          .order('recorded_at', { ascending: true })
+        setPoints(pts ?? [])
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }, [collaborator])
 
-  useEffect(() => { loadTripData() }, [loadTripData])
+  useEffect(() => {
+    if (authLoading) return
+    loadTripData()
+  }, [loadTripData, authLoading])
 
+  // Relógio de tempo decorrido
   useEffect(() => {
     if (!activeTrip) return
     function tick() {
@@ -85,56 +104,110 @@ export default function RondaPage() {
     return () => { if (clockRef.current) clearInterval(clockRef.current) }
   }, [activeTrip])
 
-  const captureAndSave = useCallback(async (tripId: string) => {
-    if (!navigator.geolocation) { setGpsError('GPS não disponível neste dispositivo.'); return }
-    navigator.geolocation.getCurrentPosition(
+  // Verifica permissão de GPS ao montar
+  useEffect(() => {
+    if (!navigator.geolocation) { setGpsPermission('unavailable'); return }
+    navigator.permissions?.query({ name: 'geolocation' }).then(result => {
+      setGpsPermission(result.state as GpsPermission)
+      result.onchange = () => setGpsPermission(result.state as GpsPermission)
+    }).catch(() => setGpsPermission('unknown'))
+  }, [])
+
+  // Limpa watchPosition ao desmontar
+  useEffect(() => () => {
+    if (watchIdRef.current !== null) navigator.geolocation.clearWatch(watchIdRef.current)
+    if (clockRef.current) clearInterval(clockRef.current)
+  }, [])
+
+  async function startTracking() {
+    if (!activeTrip || !navigator.geolocation) return
+    setTracking(true)
+    setGpsError(null)
+    lastSaveRef.current = 0
+
+    // Centraliza o mapa imediatamente antes do watchPosition disparar
+    try {
+      const pos = await getCurrentPosition()
+      setLivePosition([pos.coords.latitude, pos.coords.longitude])
+    } catch { /* ignora, watchPosition vai corrigir */ }
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
       async (pos) => {
+        setGpsPermission('granted')
         setGpsError(null)
+
+        const live: [number, number] = [pos.coords.latitude, pos.coords.longitude]
+        setLivePosition(live)
+
+        const now = Date.now()
+        // Salva no banco apenas a cada SAVE_INTERVAL_MS
+        if (now - lastSaveRef.current < SAVE_INTERVAL_MS) return
+        lastSaveRef.current = now
+
         const point: RoutePoint = {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           recorded_at: new Date().toISOString(),
         }
-        await supabase.from('route_points').insert({
-          trip_id: tripId, lat: point.lat, lng: point.lng, recorded_at: point.recorded_at,
-        })
+
+        const tripId = activeTripIdRef.current
+        if (tripId) {
+          await supabase.from('route_points').insert({
+            trip_id: tripId, lat: point.lat, lng: point.lng, recorded_at: point.recorded_at,
+          })
+        }
         setPoints(prev => [...prev, point])
         setLastPoint(point)
       },
-      (err) => setGpsError(`Erro de GPS: ${err.message}`),
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      (err) => {
+        if (err.code === err.PERMISSION_DENIED) {
+          setGpsPermission('denied')
+          setGpsError('Permissão de localização negada.')
+        } else {
+          setGpsError(`Erro de GPS: ${err.message}`)
+        }
+        setTracking(false)
+        watchIdRef.current = null
+      },
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 }
     )
-  }, [])
-
-  function startTracking() {
-    if (!activeTrip) return
-    setTracking(true)
-    captureAndSave(activeTrip.id)
-    intervalRef.current = setInterval(() => captureAndSave(activeTrip.id), GPS_INTERVAL_MS)
   }
 
   function stopTracking() {
     setTracking(false)
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
+    if (watchIdRef.current !== null) {
+      navigator.geolocation.clearWatch(watchIdRef.current)
+      watchIdRef.current = null
+    }
   }
 
-  useEffect(() => () => {
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    if (clockRef.current) clearInterval(clockRef.current)
-  }, [])
+  async function requestGpsPermission() {
+    if (!navigator.geolocation) return
+    try {
+      await getCurrentPosition()
+      setGpsPermission('granted')
+      setGpsError(null)
+    } catch (err: any) {
+      if (err.code === 1) setGpsPermission('denied')
+    }
+  }
 
-  async function sendAlert(type: 'sos' | 'vehicle_breakdown', notes?: string) {
+  async function sendAlert(type: AlertType, notes?: string) {
     if (!activeTrip || !collaborator) return
     setSendingAlert(true)
     try {
       let lat: number | null = null
       let lng: number | null = null
-      if (navigator.geolocation) {
+      // Usa a última posição conhecida se disponível
+      if (lastPoint) {
+        lat = lastPoint.lat
+        lng = lastPoint.lng
+      } else if (navigator.geolocation) {
         try {
           const pos = await getCurrentPosition()
           lat = pos.coords.latitude
           lng = pos.coords.longitude
-        } catch { /* GPS indisponível, envia sem localização */ }
+        } catch { /* sem localização */ }
       }
 
       const { error: insertError } = await supabase.from('alerts').insert({
@@ -202,17 +275,21 @@ export default function RondaPage() {
         )}
       </div>
 
-      {/* Feedback de alerta enviado */}
+      {/* Feedback de alerta */}
       {alertFeedback?.sent && (
         <div className={`flex items-center gap-2 px-4 py-3 rounded-xl border font-medium text-sm ${
           alertFeedback.type === 'sos'
             ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400'
-            : 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400'
+            : alertFeedback.type === 'vehicle_breakdown'
+            ? 'bg-amber-50 border-amber-200 text-amber-700 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-400'
+            : 'bg-orange-50 border-orange-200 text-orange-700 dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400'
         }`}>
           <CheckCircle className="w-4 h-4 shrink-0" />
           {alertFeedback.type === 'sos'
             ? 'SOS enviado! A central foi notificada com sua localização.'
-            : 'Problema registrado! A central foi notificada.'}
+            : alertFeedback.type === 'vehicle_breakdown'
+            ? 'Problema registrado! A central foi notificada.'
+            : 'Ocorrência urbana registrada! A central foi notificada.'}
         </div>
       )}
 
@@ -247,7 +324,26 @@ export default function RondaPage() {
       </div>
 
       {/* Status GPS */}
-      {gpsError && (
+      {gpsPermission === 'denied' && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-3 space-y-2">
+          <div className="flex items-center gap-2 text-red-700 dark:text-red-400 text-sm font-medium">
+            <AlertTriangle className="w-4 h-4 shrink-0" />
+            Permissão de localização bloqueada
+          </div>
+          <p className="text-xs text-red-600 dark:text-red-400">
+            Para ativar: clique no ícone de cadeado/localização na barra do navegador e permita o acesso à localização. Depois recarregue a página.
+          </p>
+        </div>
+      )}
+
+      {gpsPermission === 'unavailable' && (
+        <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-3 py-2.5 rounded-xl">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          GPS não disponível neste dispositivo.
+        </div>
+      )}
+
+      {gpsError && gpsPermission !== 'denied' && (
         <div className="flex items-center gap-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 text-sm px-3 py-2.5 rounded-xl">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           {gpsError}
@@ -266,13 +362,23 @@ export default function RondaPage() {
 
       {/* Mapa */}
       <div className="h-64 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
-        <RouteMap layers={layers} followLatest={tracking} zoom={15} />
+        <RouteMap layers={[]} zoom={15} liveCenter={livePosition ?? undefined} />
       </div>
 
       {/* Controle de rastreamento */}
-      {!tracking ? (
-        <button onClick={startTracking}
-          className="w-full flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3.5 rounded-xl transition-colors">
+      {gpsPermission === 'denied' ? (
+        <button
+          onClick={requestGpsPermission}
+          className="w-full flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3.5 rounded-xl transition-colors"
+        >
+          <LocateFixed className="w-5 h-5" /> Solicitar permissão de GPS
+        </button>
+      ) : !tracking ? (
+        <button
+          onClick={startTracking}
+          disabled={gpsPermission === 'unavailable'}
+          className="w-full flex items-center justify-center gap-2 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white font-semibold py-3.5 rounded-xl transition-colors"
+        >
           <MapPin className="w-5 h-5" /> Iniciar rastreamento
         </button>
       ) : (
@@ -286,8 +392,6 @@ export default function RondaPage() {
       <div className="border-t border-slate-200 dark:border-slate-700 pt-4">
         <p className="text-xs font-medium text-slate-400 uppercase tracking-wide mb-3">Ocorrências</p>
         <div className="grid grid-cols-2 gap-3">
-
-          {/* SOS */}
           <button
             onClick={() => sendAlert('sos')}
             disabled={sendingAlert}
@@ -296,8 +400,6 @@ export default function RondaPage() {
             <Siren className="w-7 h-7" />
             <span className="text-sm">SOS Emergência</span>
           </button>
-
-          {/* Problema no veículo */}
           <button
             onClick={() => setShowBreakdownModal(true)}
             disabled={sendingAlert}
@@ -306,17 +408,110 @@ export default function RondaPage() {
             <Wrench className="w-7 h-7" />
             <span className="text-sm">Problema Veículo</span>
           </button>
-
         </div>
+        <button
+          onClick={() => setShowUrbanModal(true)}
+          disabled={sendingAlert}
+          className="mt-3 w-full flex flex-col items-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white font-bold py-4 rounded-xl transition-colors"
+        >
+          <Construction className="w-7 h-7" />
+          <span className="text-sm">Ocorrência Urbana</span>
+        </button>
       </div>
 
       <p className="text-center text-xs text-slate-400">
-        GPS coletado a cada 10 s · Mantenha o app aberto durante a ronda
+        GPS contínuo · ponto salvo a cada 10 s · Mantenha o app aberto
       </p>
+
+      {/* Modal — ocorrência urbana */}
+      {showUrbanModal && (
+        <div className="fixed inset-0 bg-black/60 z-9999 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl">
+            <div className="flex items-center justify-between px-5 pt-5 pb-3">
+              <div className="flex items-center gap-2">
+                <Construction className="w-5 h-5 text-orange-500" />
+                <h2 className="font-bold text-slate-800 dark:text-slate-100">Ocorrência Urbana</h2>
+              </div>
+              <button onClick={() => setShowUrbanModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-5 pb-5 space-y-4">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Selecione o tipo e descreva a ocorrência. Sua localização será registrada.
+              </p>
+              <div className="grid grid-cols-4 gap-2">
+                {([
+                  { value: 'pothole', label: 'Buraco', icon: Construction },
+                  { value: 'lighting_failure', label: 'Iluminação', icon: ZapOff },
+                  { value: 'obstruction', label: 'Obstrução', icon: Ban },
+                  { value: 'custom', label: 'Outro', icon: AlertTriangle },
+                ] as const).map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    onClick={() => setUrbanType(value)}
+                    className={`flex flex-col items-center gap-1.5 py-3 rounded-xl border-2 text-xs font-semibold transition-colors ${
+                      urbanType === value
+                        ? 'border-orange-500 bg-orange-50 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+                        : 'border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {urbanType === 'custom' && (
+                <input
+                  value={urbanCustomType}
+                  onChange={e => setUrbanCustomType(e.target.value)}
+                  placeholder="Descreva o tipo de ocorrência"
+                  className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                />
+              )}
+              <input
+                value={urbanStreet}
+                onChange={e => setUrbanStreet(e.target.value)}
+                placeholder="Rua / Avenida e número (ex: Av. Brasil, 120)"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <textarea
+                value={urbanNotes}
+                onChange={e => setUrbanNotes(e.target.value)}
+                rows={3}
+                placeholder="Descreva a ocorrência (gravidade, detalhes...)"
+                className="w-full border border-slate-300 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm resize-none bg-white dark:bg-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => { setShowUrbanModal(false); setUrbanNotes(''); setUrbanStreet(''); setUrbanCustomType('') }}
+                  className="py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 font-medium text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    const typeLabel = urbanType === 'pothole' ? 'Buraco na via'
+                      : urbanType === 'lighting_failure' ? 'Falha de iluminação'
+                      : urbanType === 'obstruction' ? 'Obstrução'
+                      : urbanCustomType.trim() || 'Outro'
+                    const formattedNotes = `[${typeLabel}]${urbanStreet ? ` Rua: ${urbanStreet}` : ''}${urbanNotes ? ` — ${urbanNotes}` : ''}`
+                    sendAlert('other', formattedNotes).then(() => { setShowUrbanModal(false); setUrbanNotes(''); setUrbanStreet(''); setUrbanCustomType('') })
+                  }}
+                  disabled={sendingAlert || !urbanStreet.trim() || (urbanType === 'custom' && !urbanCustomType.trim())}
+                  className="py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-bold text-sm transition-colors"
+                >
+                  {sendingAlert ? 'Enviando...' : 'Registrar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal — problema no veículo */}
       {showBreakdownModal && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-end sm:items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black/60 z-9999 flex items-end sm:items-center justify-center p-4">
           <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-sm shadow-2xl">
             <div className="flex items-center justify-between px-5 pt-5 pb-3">
               <div className="flex items-center gap-2">
@@ -327,7 +522,6 @@ export default function RondaPage() {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             <div className="px-5 pb-5 space-y-4">
               <p className="text-sm text-slate-500 dark:text-slate-400">
                 Descreva o problema. Sua localização atual será registrada e enviada à central.

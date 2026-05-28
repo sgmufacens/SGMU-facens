@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Car, LayoutDashboard, PlusCircle, LogOut, Calendar, Navigation } from 'lucide-react'
+import { Car, LayoutDashboard, PlusCircle, LogOut, Calendar, Navigation, KeyRound } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -21,27 +21,40 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="bg-blue-800 dark:bg-blue-900 text-white px-4 py-2.5 flex items-center gap-3 shadow-md">
         <Car className="w-5 h-5 shrink-0" />
-        <span className="font-bold text-base tracking-tight">SGMU</span>
+        <span className="font-bold text-base tracking-tight">S.I.R.U</span>
 
-        {collaborator && (
-          <div className="ml-auto flex items-center gap-2">
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-medium text-white leading-none">{collaborator.name}</p>
-              <p className="text-xs text-blue-300 leading-none mt-0.5">{collaborator.badge_number}</p>
-            </div>
-            <div className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
-              <span className="text-white font-semibold text-xs">{collaborator.name.charAt(0)}</span>
-            </div>
-            <ThemeToggle className="text-blue-200 hover:bg-blue-700 hover:text-white" />
-            <button
-              onClick={handleSignOut}
-              className="p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
-              title="Sair"
-            >
-              <LogOut className="w-4 h-4 text-blue-200" />
-            </button>
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {collaborator && (
+            <>
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-medium text-white leading-none">{collaborator.name}</p>
+                <p className="text-xs text-blue-300 leading-none mt-0.5">{collaborator.badge_number}</p>
+              </div>
+              <Link
+                href="/conta"
+                className="w-7 h-7 bg-blue-600 rounded-full flex items-center justify-center shrink-0 hover:bg-blue-500 transition-colors"
+                title="Alterar senha"
+              >
+                <span className="text-white font-semibold text-xs">{collaborator.name.charAt(0)}</span>
+              </Link>
+              <Link
+                href="/conta"
+                className="p-1.5 rounded-lg hover:bg-blue-700 transition-colors sm:hidden"
+                title="Alterar senha"
+              >
+                <KeyRound className="w-4 h-4 text-blue-200" />
+              </Link>
+            </>
+          )}
+          <ThemeToggle className="text-blue-200 hover:bg-blue-700 hover:text-white" />
+          <button
+            onClick={handleSignOut}
+            className="p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+            title="Sair"
+          >
+            <LogOut className="w-4 h-4 text-blue-200" />
+          </button>
+        </div>
       </header>
 
       {/* Main content */}

@@ -1,14 +1,14 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Siren, Wrench, CheckCircle, Clock, MapPin, Phone, Filter } from 'lucide-react'
+import { Siren, Wrench, CheckCircle, Clock, MapPin, Phone, Filter, Construction, ZapOff, Ban } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { formatDistanceToNow, format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 type AlertRecord = {
   id: string
-  type: 'sos' | 'vehicle_breakdown' | 'other'
+  type: 'sos' | 'vehicle_breakdown' | 'pothole' | 'lighting_failure' | 'obstruction' | 'other'
   notes: string | null
   lat: number | null
   lng: number | null
@@ -24,6 +24,9 @@ type CollaboratorOption = { id: string; name: string }
 const TYPE_LABEL: Record<string, string> = {
   sos: 'SOS Emergência',
   vehicle_breakdown: 'Problema de veículo',
+  pothole: 'Buraco na via',
+  lighting_failure: 'Falha de iluminação',
+  obstruction: 'Obstrução',
   other: 'Outro',
 }
 
@@ -119,6 +122,9 @@ export default function ChamadosPage() {
             <option value="">Todos os tipos</option>
             <option value="sos">SOS Emergência</option>
             <option value="vehicle_breakdown">Problema de veículo</option>
+            <option value="pothole">Buraco na via</option>
+            <option value="lighting_failure">Falha de iluminação</option>
+            <option value="obstruction">Obstrução</option>
             <option value="other">Outro</option>
           </select>
 
@@ -145,8 +151,27 @@ export default function ChamadosPage() {
         <div className="space-y-2">
           {filtered.map(alert => {
             const isSos = alert.type === 'sos'
+            const notes = alert.notes ?? ''
+            const isUrban = alert.type === 'other' && /^\[(Buraco na via|Falha de iluminação|Obstrução)\]/.test(notes)
             const isOpen = alert.status === 'open'
             const phone = alert.collaborator?.phone
+
+            const AlertIcon = isSos ? Siren
+              : alert.type === 'vehicle_breakdown' ? Wrench
+              : notes.startsWith('[Buraco na via]') ? Construction
+              : notes.startsWith('[Falha de iluminação]') ? ZapOff
+              : notes.startsWith('[Obstrução]') ? Ban
+              : Wrench
+
+            const iconColor = isOpen
+              ? isSos ? 'text-red-600 dark:text-red-400 animate-pulse'
+                : isUrban ? 'text-orange-600 dark:text-orange-400'
+                : 'text-amber-600 dark:text-amber-400'
+              : 'text-slate-400'
+
+            const displayLabel = isUrban
+              ? notes.match(/^\[([^\]]+)\]/)?.[1] ?? TYPE_LABEL[alert.type]
+              : TYPE_LABEL[alert.type]
 
             return (
               <div
@@ -154,6 +179,8 @@ export default function ChamadosPage() {
                 className={`bg-white dark:bg-slate-800 border rounded-xl p-4 ${
                   isOpen && isSos
                     ? 'border-red-300 dark:border-red-700'
+                    : isOpen && isUrban
+                    ? 'border-orange-300 dark:border-orange-700'
                     : isOpen
                     ? 'border-amber-300 dark:border-amber-700'
                     : 'border-slate-200 dark:border-slate-700'
@@ -162,17 +189,15 @@ export default function ChamadosPage() {
                 {/* Topo: tipo + status + data */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    {isSos
-                      ? <Siren className={`w-5 h-5 shrink-0 ${isOpen ? 'text-red-600 dark:text-red-400 animate-pulse' : 'text-slate-400'}`} />
-                      : <Wrench className={`w-5 h-5 shrink-0 ${isOpen ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}`} />
-                    }
+                    <AlertIcon className={`w-5 h-5 shrink-0 ${iconColor}`} />
                     <div>
                       <p className={`font-bold text-sm ${
                         isOpen && isSos ? 'text-red-700 dark:text-red-300' :
+                        isOpen && isUrban ? 'text-orange-700 dark:text-orange-300' :
                         isOpen ? 'text-amber-700 dark:text-amber-300' :
                         'text-slate-600 dark:text-slate-300'
                       }`}>
-                        {TYPE_LABEL[alert.type]}
+                        {displayLabel}
                       </p>
                       <p className="text-xs text-slate-400 dark:text-slate-500">
                         {format(new Date(alert.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}

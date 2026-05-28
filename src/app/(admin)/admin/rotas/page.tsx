@@ -138,7 +138,7 @@ export default function AdminRotasPage() {
             <p className="text-sm">Nenhuma rota com pontos GPS no período</p>
           </div>
         ) : (
-          <RouteMap layers={layers} zoom={13} />
+          <RouteMap layers={layers} zoom={13} roadMatching />
         )}
       </div>
 
