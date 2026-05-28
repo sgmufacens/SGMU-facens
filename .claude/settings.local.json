@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command ' *)",
+      "Bash(npm run *)",
+      "Bash(ipconfig)",
+      "Bash(findstr /i \"IPv4\")"
+    ]
+  }
+}
