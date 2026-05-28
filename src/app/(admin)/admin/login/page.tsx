@@ -23,7 +23,7 @@ export default function AdminLoginPage() {
     })
 
     if (res.ok) {
-      router.push('/admin/vehicles')
+      router.push('/admin')
       router.refresh()
     } else {
       setError('Senha incorreta. Tente novamente.')

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { Car, Users, Clock, Calendar, CheckCircle, Wrench, AlertTriangle, Siren, MapPin, Phone } from 'lucide-react'
+import Link from 'next/link'
+import { Car, Users, Clock, Calendar, CheckCircle, Wrench, AlertTriangle, Bell, ChevronRight } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Vehicle, Trip, Schedule } from '@/types'
 import { formatDistanceToNow, format } from 'date-fns'
@@ -111,11 +112,6 @@ export default function AdminDashboardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [load])
 
-  async function resolveAlert(id: string) {
-    await supabase.from('alerts').update({ status: 'resolved', resolved_at: new Date().toISOString() }).eq('id', id)
-    setOpenAlerts(prev => prev.filter(a => a.id !== id))
-  }
-
   const counts = {
     total: vehicles.length,
     available: vehicles.filter(v => v.status === 'available').length,
@@ -134,73 +130,40 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-6">
 
-      {/* ── Alertas abertos (SOS / Problema de veículo) ── */}
-      {openAlerts.length > 0 && (
-        <section className="space-y-2">
-          {openAlerts.map(alert => {
-            const isSos = alert.type === 'sos'
-            const phone = alert.collaborator?.phone
-            return (
-              <div key={alert.id} className={`border-2 rounded-xl p-4 ${
-                isSos
-                  ? 'bg-red-50 border-red-400 dark:bg-red-900/30 dark:border-red-600'
-                  : 'bg-amber-50 border-amber-400 dark:bg-amber-900/30 dark:border-amber-600'
-              }`}>
-                {/* Cabeçalho */}
-                <div className="flex items-center gap-2">
-                  {isSos
-                    ? <Siren className="w-5 h-5 text-red-600 dark:text-red-400 shrink-0 animate-pulse" />
-                    : <Wrench className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />}
-                  <p className={`font-bold text-sm ${isSos ? 'text-red-700 dark:text-red-300' : 'text-amber-700 dark:text-amber-300'}`}>
-                    {isSos ? 'SOS — Emergência' : 'Problema com veículo'}
-                  </p>
-                  <span className="ml-auto text-xs text-slate-500 dark:text-slate-400">
-                    {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true, locale: ptBR })}
-                  </span>
-                </div>
-
-                {/* Colaborador + veículo */}
-                <p className="text-sm text-slate-700 dark:text-slate-200 mt-2">
-                  <span className="font-semibold">{alert.collaborator?.name ?? 'Colaborador'}</span>
-                  {alert.vehicle && <span className="text-slate-500 dark:text-slate-400"> · {alert.vehicle.plate} {alert.vehicle.model}</span>}
-                </p>
-
-                {alert.notes && (
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 italic bg-white/60 dark:bg-black/20 rounded-lg px-2.5 py-1.5">"{alert.notes}"</p>
-                )}
-
-                {/* Ações */}
-                <div className="flex items-center gap-2 mt-3 flex-wrap">
-                  {phone && (
-                    <a
-                      href={`tel:${phone}`}
-                      className="flex items-center gap-1.5 text-xs font-semibold bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors"
-                    >
-                      <Phone className="w-3.5 h-3.5" /> Ligar — {phone}
-                    </a>
-                  )}
-                  {alert.lat && alert.lng && (
-                    <a
-                      href={`https://maps.google.com/?q=${alert.lat},${alert.lng}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-700 border border-blue-200 dark:border-blue-800 px-2.5 py-2 rounded-lg hover:bg-blue-50 dark:hover:bg-slate-600 transition-colors"
-                    >
-                      <MapPin className="w-3.5 h-3.5" /> Ver no mapa
-                    </a>
-                  )}
-                  <button
-                    onClick={() => resolveAlert(alert.id)}
-                    className="ml-auto flex items-center gap-1 text-xs bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 px-2.5 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600 transition-colors"
-                  >
-                    <CheckCircle className="w-3.5 h-3.5" /> Resolver
-                  </button>
-                </div>
-              </div>
-            )
-          })}
-        </section>
-      )}
+      {/* ── Card de chamados em aberto ── */}
+      <Link href="/admin/chamados">
+        <div className={`border-2 rounded-xl p-4 flex items-center gap-4 transition-colors cursor-pointer ${
+          openAlerts.some(a => a.type === 'sos')
+            ? 'bg-red-50 border-red-400 hover:bg-red-100 dark:bg-red-900/20 dark:border-red-600'
+            : openAlerts.length > 0
+            ? 'bg-amber-50 border-amber-400 hover:bg-amber-100 dark:bg-amber-900/20 dark:border-amber-600'
+            : 'bg-white border-slate-200 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700'
+        }`}>
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
+            openAlerts.length > 0 ? 'bg-white/70 dark:bg-black/20' : 'bg-slate-100 dark:bg-slate-700'
+          }`}>
+            <Bell className={`w-6 h-6 ${
+              openAlerts.some(a => a.type === 'sos') ? 'text-red-600 animate-pulse' :
+              openAlerts.length > 0 ? 'text-amber-600' : 'text-slate-400'
+            }`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`font-bold text-base ${
+              openAlerts.some(a => a.type === 'sos') ? 'text-red-700 dark:text-red-300' :
+              openAlerts.length > 0 ? 'text-amber-700 dark:text-amber-300' :
+              'text-slate-700 dark:text-slate-200'
+            }`}>
+              {openAlerts.length > 0
+                ? `${openAlerts.length} chamado${openAlerts.length > 1 ? 's' : ''} em aberto`
+                : 'Nenhum chamado em aberto'}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {openAlerts.length > 0 ? 'Clique para ver e resolver os chamados' : 'Tudo certo por aqui'}
+            </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-slate-400 shrink-0" />
+        </div>
+      </Link>
 
       {/* Header */}
       <div className="flex items-center justify-between">
