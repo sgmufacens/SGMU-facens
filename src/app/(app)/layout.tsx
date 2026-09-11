@@ -1,14 +1,23 @@
 'use client'
 
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { Car, LayoutDashboard, PlusCircle, LogOut, Calendar, Navigation, KeyRound } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
+const NAV_ITEMS = [
+  { href: '/dashboard', label: 'Início', icon: LayoutDashboard },
+  { href: '/checkout', label: 'Retirar', icon: PlusCircle },
+  { href: '/schedules', label: 'Agenda', icon: Calendar },
+  { href: '/ronda', label: 'Ronda', icon: Navigation },
+  { href: '/checkin', label: 'Devolver', icon: Car },
+]
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { collaborator, signOut } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
 
   async function handleSignOut() {
     await signOut()
@@ -22,6 +31,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="bg-blue-800 dark:bg-blue-900 text-white px-4 py-2.5 flex items-center gap-3 shadow-md">
         <Car className="w-5 h-5 shrink-0" />
         <span className="font-bold text-base tracking-tight">S.I.R.U</span>
+
+        <nav className="hidden md:flex items-center gap-1 ml-6">
+          {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                pathname === href
+                  ? 'bg-blue-700 dark:bg-blue-800 text-white'
+                  : 'text-blue-200 hover:bg-blue-700/60 hover:text-white'
+              }`}
+            >
+              <Icon className="w-4 h-4" />
+              {label}
+            </Link>
+          ))}
+        </nav>
 
         <div className="ml-auto flex items-center gap-2">
           {collaborator && (
@@ -58,32 +84,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 p-4 max-w-2xl mx-auto w-full">
+      <main className={`flex-1 p-4 md:p-6 mx-auto w-full ${pathname === '/dashboard' ? 'max-w-6xl' : 'max-w-2xl'}`}>
         {children}
       </main>
 
       {/* Bottom nav */}
-      <nav className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-around py-2 sticky bottom-0">
-        <Link href="/dashboard" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
-          <LayoutDashboard className="w-5 h-5" />
-          Início
-        </Link>
-        <Link href="/checkout" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
-          <PlusCircle className="w-5 h-5" />
-          Retirar
-        </Link>
-        <Link href="/schedules" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
-          <Calendar className="w-5 h-5" />
-          Agenda
-        </Link>
-        <Link href="/ronda" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
-          <Navigation className="w-5 h-5" />
-          Ronda
-        </Link>
-        <Link href="/checkin" className="flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-blue-700 dark:hover:text-blue-400 text-xs py-1 px-3">
-          <Car className="w-5 h-5" />
-          Devolver
-        </Link>
+      <nav className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 flex justify-around py-2 sticky bottom-0 md:hidden">
+        {NAV_ITEMS.map(({ href, label, icon: Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex flex-col items-center gap-1 text-xs py-1 px-3 ${
+              pathname === href
+                ? 'text-blue-700 dark:text-blue-400 font-medium'
+                : 'text-slate-500 dark:text-slate-400'
+            }`}
+          >
+            <Icon className="w-5 h-5" />
+            {label}
+          </Link>
+        ))}
       </nav>
     </div>
   )

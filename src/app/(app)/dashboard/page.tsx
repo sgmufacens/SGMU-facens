@@ -70,7 +70,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between mt-2">
-        <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Visão Geral da Frota</h1>
+        <h1 className="text-xl md:text-2xl font-bold text-slate-800 dark:text-slate-100">Visão Geral da Frota</h1>
         <div className="flex items-center gap-1.5 text-xs text-green-600 dark:text-green-400 font-medium">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -81,40 +81,46 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-3 text-center">
-          <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-green-700 dark:text-green-400">{counts.available}</p>
-          <p className="text-xs text-green-600 dark:text-green-400">Disponíveis</p>
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
+        <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-3 md:p-5 flex flex-col md:flex-row items-center md:gap-4">
+          <CheckCircle className="w-5 h-5 md:w-8 md:h-8 text-green-600 dark:text-green-400 mb-1 md:mb-0 shrink-0" />
+          <div className="text-center md:text-left">
+            <p className="text-2xl md:text-3xl font-bold text-green-700 dark:text-green-400 leading-tight">{counts.available}</p>
+            <p className="text-xs md:text-sm text-green-600 dark:text-green-400">Disponíveis</p>
+          </div>
         </div>
-        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3 text-center">
-          <Clock className="w-5 h-5 text-amber-600 dark:text-amber-400 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-amber-700 dark:text-amber-400">{counts.in_use}</p>
-          <p className="text-xs text-amber-600 dark:text-amber-400">Em uso</p>
+        <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3 md:p-5 flex flex-col md:flex-row items-center md:gap-4">
+          <Clock className="w-5 h-5 md:w-8 md:h-8 text-amber-600 dark:text-amber-400 mb-1 md:mb-0 shrink-0" />
+          <div className="text-center md:text-left">
+            <p className="text-2xl md:text-3xl font-bold text-amber-700 dark:text-amber-400 leading-tight">{counts.in_use}</p>
+            <p className="text-xs md:text-sm text-amber-600 dark:text-amber-400">Em uso</p>
+          </div>
         </div>
-        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-3 text-center">
-          <Wrench className="w-5 h-5 text-red-600 dark:text-red-400 mx-auto mb-1" />
-          <p className="text-2xl font-bold text-red-700 dark:text-red-400">{counts.maintenance}</p>
-          <p className="text-xs text-red-600 dark:text-red-400">Manutenção</p>
+        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-3 md:p-5 flex flex-col md:flex-row items-center md:gap-4">
+          <Wrench className="w-5 h-5 md:w-8 md:h-8 text-red-600 dark:text-red-400 mb-1 md:mb-0 shrink-0" />
+          <div className="text-center md:text-left">
+            <p className="text-2xl md:text-3xl font-bold text-red-700 dark:text-red-400 leading-tight">{counts.maintenance}</p>
+            <p className="text-xs md:text-sm text-red-600 dark:text-red-400">Manutenção</p>
+          </div>
         </div>
       </div>
 
       {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-3">
-        <Link href="/checkout" className="bg-blue-700 text-white rounded-xl p-3 flex flex-col gap-2 active:bg-blue-800 transition-colors">
-          <Car className="w-5 h-5" />
-          <span className="font-semibold text-sm">Retirar</span>
-          <ArrowRight className="w-4 h-4 self-end" />
+      <div className="grid grid-cols-3 gap-3 md:gap-4">
+        <Link href="/checkout" className="group bg-blue-700 text-white rounded-xl p-3 md:p-5 flex flex-col gap-2 hover:bg-blue-600 active:bg-blue-800 transition-colors">
+          <Car className="w-5 h-5 md:w-6 md:h-6" />
+          <span className="font-semibold text-sm md:text-base">Retirar</span>
+          <ArrowRight className="w-4 h-4 self-end transition-transform group-hover:translate-x-1" />
         </Link>
-        <Link href="/checkin" className="bg-slate-700 dark:bg-slate-600 text-white rounded-xl p-3 flex flex-col gap-2 active:bg-slate-800 transition-colors">
-          <CheckCircle className="w-5 h-5" />
-          <span className="font-semibold text-sm">Devolver</span>
-          <ArrowRight className="w-4 h-4 self-end" />
+        <Link href="/checkin" className="group bg-slate-700 dark:bg-slate-600 text-white rounded-xl p-3 md:p-5 flex flex-col gap-2 hover:bg-slate-600 dark:hover:bg-slate-500 active:bg-slate-800 transition-colors">
+          <CheckCircle className="w-5 h-5 md:w-6 md:h-6" />
+          <span className="font-semibold text-sm md:text-base">Devolver</span>
+          <ArrowRight className="w-4 h-4 self-end transition-transform group-hover:translate-x-1" />
         </Link>
-        <Link href="/schedule" className="bg-indigo-600 text-white rounded-xl p-3 flex flex-col gap-2 active:bg-indigo-700 transition-colors">
-          <CalendarPlus className="w-5 h-5" />
-          <span className="font-semibold text-sm">Agendar</span>
-          <ArrowRight className="w-4 h-4 self-end" />
+        <Link href="/schedule" className="group bg-indigo-600 text-white rounded-xl p-3 md:p-5 flex flex-col gap-2 hover:bg-indigo-500 active:bg-indigo-700 transition-colors">
+          <CalendarPlus className="w-5 h-5 md:w-6 md:h-6" />
+          <span className="font-semibold text-sm md:text-base">Agendar</span>
+          <ArrowRight className="w-4 h-4 self-end transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
 
@@ -123,9 +129,9 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Meus agendamentos</h2>
-            <Link href="/schedules" className="text-xs text-blue-700 dark:text-blue-400 font-medium">Ver todos</Link>
+            <Link href="/schedules" className="text-xs text-blue-700 dark:text-blue-400 font-medium hover:underline">Ver todos</Link>
           </div>
-          <div className="space-y-2">
+          <div className="grid gap-2 md:gap-3 md:grid-cols-2 xl:grid-cols-3">
             {upcomingSchedules.map(s => {
               const vehicle = s.vehicle as any
               const destBranch = s.destination_branch as any
@@ -153,9 +159,9 @@ export default function Dashboard() {
       {activeTrips.length > 0 && (
         <div>
           <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Viagens em andamento</h2>
-          <div className="space-y-2">
+          <div className="grid gap-2 md:gap-3 md:grid-cols-2 xl:grid-cols-3">
             {activeTrips.map(trip => (
-              <div key={trip.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex items-start justify-between">
+              <div key={trip.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 md:p-4 flex items-start justify-between gap-3 transition-colors hover:border-slate-300 dark:hover:border-slate-600">
                 <div>
                   <p className="font-semibold text-slate-800 dark:text-slate-100">
                     {(trip.vehicle as any)?.plate} — {(trip.vehicle as any)?.model}
@@ -175,9 +181,9 @@ export default function Dashboard() {
       {/* Vehicles list */}
       <div>
         <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-3">Todos os veículos</h2>
-        <div className="space-y-2">
+        <div className="grid gap-2 md:gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {vehicles.map(vehicle => (
-            <div key={vehicle.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex items-center justify-between">
+            <div key={vehicle.id} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 md:p-4 flex items-center justify-between gap-3 transition-colors hover:border-slate-300 dark:hover:border-slate-600">
               <div>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{vehicle.plate} — {vehicle.brand} {vehicle.model}</p>
                 <p className="text-sm text-slate-500 dark:text-slate-400">{vehicle.year} · {vehicle.color}</p>
